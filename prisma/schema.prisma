@@ -1,0 +1,110 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Producto {
+  IdProducto    Int      @id @default(autoincrement())
+  Codigo        String
+  Nombre        String
+  Descripcion   String
+  IdCategoria   Int
+  Stock         Int
+  Precio        Decimal  @db.Decimal(10, 2)
+  Estado        Boolean  @default(true)
+  FechaRegistro DateTime @default(now())
+
+  Categoria Categoria         @relation(fields: [IdCategoria], references: [IdCategoria])
+  Detalles  DetalleDespacho[]
+}
+
+model Categoria {
+  IdCategoria   Int      @id @default(autoincrement())
+  Descripcion   String
+  Estado        Boolean  @default(true)
+  FechaRegistro DateTime @default(now())
+
+  Productos Producto[]
+}
+
+model AreaDepartamento {
+  IdArea     Int     @id @default(autoincrement())
+  NombreArea String
+  Estado     Boolean @default(true)
+
+  // 🔁 Relación inversa
+  Colaboradores Colaborador[] // ← Esto es lo que faltaba
+}
+
+model Colaborador {
+  IdColaborador  Int      @id @default(autoincrement())
+  Documento      String
+  NombreCompleto String
+  Correo         String
+  Telefono       String
+  Estado         Boolean  @default(true)
+  IdArea         Int
+  Cargo          String
+  FechaRegistro  DateTime @default(now())
+
+  // 🔁 Relación directa
+  Area AreaDepartamento @relation(fields: [IdArea], references: [IdArea])
+}
+
+model Usuario {
+  IdUsuario      Int     @id @default(autoincrement())
+  Documento      String
+  NombreCompleto String
+  Correo         String
+  Clave          String
+  IdRol          Int
+  Estado         Boolean @default(true)
+
+  Rol Rol @relation(fields: [IdRol], references: [IdRol])
+}
+
+model Rol {
+  IdRol       Int    @id @default(autoincrement())
+  Descripcion String
+
+  Usuarios Usuario[]
+}
+
+model Despacho {
+  IdDespacho              Int      @id @default(autoincrement())
+  IdUsuario               Int
+  NumeroBoleta            String
+  DocumentoColaborador    String
+  NombreColaborador       String
+  DepartamentoColaborador String
+  CargoColaborador        String
+  MontoTotal              Decimal  @db.Decimal(10, 2)
+  FechaRegistro           DateTime @default(now())
+
+  Detalles DetalleDespacho[]
+}
+
+model DetalleDespacho {
+  IdDetalleDespacho Int      @id @default(autoincrement())
+  IdDespacho        Int
+  IdProducto        Int
+  CodigoProducto    String
+  NombreProducto    String
+  Precio            Decimal  @db.Decimal(10, 2)
+  Cantidad          Int
+  SubTotal          Decimal  @db.Decimal(10, 2)
+  FechaRegistro     DateTime @default(now())
+
+  Producto Producto @relation(fields: [IdProducto], references: [IdProducto])
+  Despacho Despacho @relation(fields: [IdDespacho], references: [IdDespacho])
+}
